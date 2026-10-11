@@ -1,0 +1,20 @@
+-- Seed 15 permission, thời gian lưu theo UTC như các cột Instant khác
+INSERT INTO permissions (code, name, description, created_by, created_date)
+VALUES ('COMPANY_VIEW', 'Xem công ty', 'Xem danh sách và chi tiết công ty', 'system', UTC_TIMESTAMP(6)),
+       ('COMPANY_CREATE', 'Tạo công ty', 'Tạo công ty mới', 'system', UTC_TIMESTAMP(6)),
+       ('COMPANY_UPDATE', 'Sửa công ty', 'Sửa tên, địa chỉ, mô tả công ty', 'system', UTC_TIMESTAMP(6)),
+       ('COMPANY_CHANGE_STATUS', 'Đổi trạng thái công ty', 'Kích hoạt hoặc vô hiệu hóa công ty', 'system',
+        UTC_TIMESTAMP(6)),
+       ('USER_VIEW', 'Xem người dùng', 'Xem danh sách và chi tiết người dùng', 'system', UTC_TIMESTAMP(6)),
+       ('USER_CREATE', 'Tạo người dùng', 'Tạo người dùng mới', 'system', UTC_TIMESTAMP(6)),
+       ('USER_UPDATE', 'Sửa người dùng', 'Sửa thông tin người dùng, kể cả chuyển công ty', 'system', UTC_TIMESTAMP(6)),
+       ('USER_CHANGE_STATUS', 'Đổi trạng thái người dùng', 'Kích hoạt hoặc vô hiệu hóa người dùng', 'system',
+        UTC_TIMESTAMP(6)),
+       ('USER_ASSIGN_ROLE', 'Gán role cho người dùng', 'Gán hoặc gỡ role của người dùng', 'system', UTC_TIMESTAMP(6)),
+       ('ROLE_VIEW', 'Xem role', 'Xem danh sách và chi tiết role', 'system', UTC_TIMESTAMP(6)),
+       ('ROLE_CREATE', 'Tạo role', 'Tạo role mới', 'system', UTC_TIMESTAMP(6)),
+       ('ROLE_UPDATE', 'Sửa role', 'Sửa tên và mô tả role', 'system', UTC_TIMESTAMP(6)),
+       ('ROLE_DELETE', 'Xóa role', 'Xóa role', 'system', UTC_TIMESTAMP(6)),
+       ('ROLE_ASSIGN_PERMISSION', 'Gán permission cho role', 'Gán hoặc gỡ permission của role', 'system',
+        UTC_TIMESTAMP(6)),
+       ('PERMISSION_VIEW', 'Xem permission', 'Xem danh sách permission', 'system', UTC_TIMESTAMP(6));

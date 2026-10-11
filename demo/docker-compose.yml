@@ -1,0 +1,28 @@
+name: user-management
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_user_management
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_DATABASE: UserManagement
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_user_management
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  mysql_data:
+  redis_data:
