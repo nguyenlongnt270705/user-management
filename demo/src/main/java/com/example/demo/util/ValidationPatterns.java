@@ -5,5 +5,5 @@ public final class ValidationPatterns {
     private ValidationPatterns() {
     }
 
-    public static final String PHONE = "^0\\\\d{9}$"; // sdt 10 số bắt đầu từ 0
+    public static final String PHONE = "^0\\d{9}$"; // 10 chữ số, bắt đầu bằng 0
 }

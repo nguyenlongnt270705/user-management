@@ -2,7 +2,6 @@ package com.example.demo.security;
 
 import com.example.demo.constant.SystemConstants;
 import com.example.demo.entity.Company;
-import com.example.demo.entity.Permission;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.enums.Status;
@@ -11,12 +10,10 @@ import com.example.demo.exception.ErrorMessage;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -43,30 +40,46 @@ public class PrivilegeGuard {
         }
     }
 
-    // khi gán role cho user, cấm role System Admin và role có quyền vượt quyền người gọi
-    public void assertCanAssignRoles(Collection<Role> roles) {
-        Set<String> mine = SecurityUtils.getCurrentPermissions();
-
+    // cấm gán SA cho user
+    public void assertNoSystemAdminRole(Collection<Role> roles) {
         for (Role role : roles) {
             if (role.isSystemAdmin()) {
                 throw AppException.error(ErrorMessage.SYSTEM_ROLE_ASSIGN_FORBIDDEN);
             }
-            for (Permission permission : role.getPermissions()) {
-                if (!mine.contains(permission.getCode())) {
-                    throw AppException.error(ErrorMessage.PERMISSION_NOT_HELD);
-                }
-            }
         }
     }
 
-    // cấm vô hiệu hóa công ty cha
+    // ng tạo phải có quyền gán role và permission cho user
+    public void assertHasAssignPermission() {
+        if (!SecurityUtils.getCurrentPermissions().contains(Permissions.USER_ASSIGN_ROLE)) {
+            throw AppException.error(ErrorMessage.ASSIGN_ROLE_FORBIDDEN);
+        }
+    }
+
+    // Cấm đổi role và permission của SA
+    public void assertNotSystemAdminUser(User target) {
+        if (userRepository.isSystemAdmin(target.getId())) {
+            throw AppException.error(ErrorMessage.SYSTEM_ADMIN_ACCESS_PROTECTED);
+        }
+    }
+
+    // cấm inactive công ty cha và công ty ng tạo
     public void assertCanChangeCompanyStatus(Company company, Status newStatus) {
-        if (newStatus == Status.INACTIVE && SystemConstants.HQ_COMPANY_CODE.equals(company.getCode())) {
+        if (newStatus != Status.INACTIVE) {
+            return;
+        }
+        if (SystemConstants.HQ_COMPANY_CODE.equals(company.getCode())) {
             throw AppException.error(ErrorMessage.HQ_COMPANY_PROTECTED);
         }
+        Long callerCompanyId = userRepository.findWithCompanyById(SecurityUtils.getCurrentUserId())
+                .map(user -> user.getCompany().getId())
+                .orElse(null);
+        if (company.getId().equals(callerCompanyId)) {
+            throw AppException.error(ErrorMessage.OWN_COMPANY_PROTECTED);
+        }
     }
 
-    // cấm vô hiệu hóa SA và chính mình
+    // cấm inactive SA và chính mình
     public void assertCanChangeUserStatus(User target, Status newStatus) {
         if (newStatus != Status.INACTIVE) {
             return;
@@ -81,9 +94,7 @@ public class PrivilegeGuard {
 
     // người gọi chỉ được thao tác user có quyền nằm trong quyền của mình
     public void assertCanManageUser(User target) {
-        Set<String> targetPermissions = authorityService.loadAuthorities(target.getId()).stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
+        Set<String> targetPermissions = authorityService.loadPermissionCodes(target.getId());
 
         if (!SecurityUtils.getCurrentPermissions().containsAll(targetPermissions)) {
             throw AppException.error(ErrorMessage.USER_OUT_OF_SCOPE);

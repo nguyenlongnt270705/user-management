@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -21,4 +22,13 @@ public interface PermissionRepository extends JpaRepository<Permission, Long>, J
             select p.code from Permission p
             """)
     List<String> findAllCodes();
+
+    @Query("select p.code from User u join u.grantedPermissions p where u.id = :userId")
+    List<String> findGrantedCodesByUserId(@Param("userId") Long userId);
+
+    @Query("select p.code from User u join u.revokedPermissions p where u.id = :userId")
+    List<String> findRevokedCodesByUserId(@Param("userId") Long userId);
+
+    @Query("select p from Permission p where p.code in :codes")
+    List<Permission> findByCodeIn(@Param("codes") Collection<String> codes);
 }

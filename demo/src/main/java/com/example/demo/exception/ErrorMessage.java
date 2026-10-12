@@ -26,6 +26,14 @@ public enum ErrorMessage {
     ROLE_IN_USE(409, "ROLE_IN_USE", "Role đang được người dùng sử dụng"),
     COMPANY_NOT_FOUND(404, "COMPANY_NOT_FOUND", "Không tìm thấy công ty"),
     COMPANY_CODE_EXISTS(409, "COMPANY_CODE_EXISTS", "Mã công ty đã tồn tại"),
+    USER_NOT_FOUND(404, "USER_NOT_FOUND", "Không tìm thấy người dùng"),
+    USER_CODE_EXISTS(409, "USER_CODE_EXISTS", "Mã người dùng đã tồn tại"),
+    EMAIL_EXISTS(409, "EMAIL_EXISTS", "Email đã được sử dụng"),
+    PHONE_EXISTS(409, "PHONE_EXISTS", "Số điện thoại đã được sử dụng"),
+    ASSIGN_ROLE_FORBIDDEN(403, "ASSIGN_ROLE_FORBIDDEN", "Bạn không có quyền gán role và permission cho người dùng"),
+    SYSTEM_ADMIN_ACCESS_PROTECTED(403, "SYSTEM_ADMIN_ACCESS_PROTECTED", "Không thể thay đổi role và permission của tài khoản System Admin"),
+    OWN_COMPANY_PROTECTED(403, "OWN_COMPANY_PROTECTED", "Không thể vô hiệu hóa công ty mà bạn đang thuộc về"),
+    CURRENT_PASSWORD_INCORRECT(400, "CURRENT_PASSWORD_INCORRECT", "Mật khẩu hiện tại không đúng"),
 
     ;
 

@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -19,22 +17,24 @@ public class AuthorityService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
 
-    @Transactional(readOnly = true)
     public Set<GrantedAuthority> loadAuthorities(Long userId) {
-        List<String> codes;
-        if (userRepository.isSystemAdmin(userId)) {
-            // SA
-            codes = permissionRepository.findAllCodes();
-        } else {
-            // user thường
-            codes = permissionRepository.findCodeByUserId(userId);
-        }
-
-        // convert permissionCode -> Authorities <=> @PreAuthorize
         Set<GrantedAuthority> authorities = new HashSet<>();
-        for (String code : codes) {
+        for (String code : loadPermissionCodes(userId)) {
             authorities.add(new SimpleGrantedAuthority(code));
         }
         return authorities;
+    }
+
+    public Set<String> loadPermissionCodes(Long userId) {
+        // SA có toàn bộ permission
+        if (userRepository.isSystemAdmin(userId)) {
+            return new HashSet<>(permissionRepository.findAllCodes());
+        }
+        // quyền của các role
+        Set<String> codes = new HashSet<>(permissionRepository.findCodeByUserId(userId));
+        // thêm bớt quyền
+        codes.addAll(permissionRepository.findGrantedCodesByUserId(userId));
+        permissionRepository.findRevokedCodesByUserId(userId).forEach(codes::remove);
+        return codes;
     }
 }
