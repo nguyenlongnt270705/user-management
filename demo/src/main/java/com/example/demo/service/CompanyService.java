@@ -4,9 +4,12 @@ import com.example.demo.dto.CompanyDTO;
 import com.example.demo.dto.request.*;
 import com.example.demo.dto.response.SearchResponse;
 import com.example.demo.entity.Company;
+import com.example.demo.enums.Status;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorMessage;
 import com.example.demo.repository.CompanyRepository;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.security.AuthSessionStore;
 import com.example.demo.security.PrivilegeGuard;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,8 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final PrivilegeGuard privilegeGuard;
+    private final UserRepository userRepository;
+    private final AuthSessionStore authSessionStore;
 
     public SearchResponse<CompanyDTO> search(SearchRequest<SearchCompanyReq> request) {
         SearchRequest<SearchCompanyReq> safeRequest = request != null ? request : new SearchRequest<>();
@@ -98,7 +103,13 @@ public class CompanyService {
         privilegeGuard.assertCanChangeCompanyStatus(company, request.status());
 
         company.setStatus(request.status());
-        return CompanyDTO.fromEntity(companyRepository.saveAndFlush(company));
+        CompanyDTO result = CompanyDTO.fromEntity(companyRepository.saveAndFlush(company));
+
+        if (request.status() == Status.INACTIVE) {
+            userRepository.findIdsByCompanyId(id).forEach(authSessionStore::deleteSession);
+        }
+
+        return result;
     }
 
     private Company findCompany(Long id) {

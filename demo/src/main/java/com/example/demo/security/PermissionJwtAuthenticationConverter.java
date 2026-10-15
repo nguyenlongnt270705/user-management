@@ -2,6 +2,7 @@ package com.example.demo.security;
 
 import com.example.demo.entity.User;
 import com.example.demo.enums.Status;
+import com.example.demo.exception.ErrorMessage;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
@@ -20,6 +21,7 @@ import java.util.Set;
 public class PermissionJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     private final UserRepository userRepository;
     private final AuthorityService authorityService;
+    private final AuthSessionStore authSessionStore;
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
@@ -30,6 +32,8 @@ public class PermissionJwtAuthenticationConverter implements Converter<Jwt, Abst
         } catch (NumberFormatException e) {
             throw new InvalidBearerTokenException("Token không hợp lệ");
         }
+
+        checkSession(userId, jwt.getClaimAsString("sid"));
 
         User user = userRepository.findWithCompanyById(userId)
                 .orElseThrow(() -> new InvalidBearerTokenException("Token không hợp lệ"));
@@ -47,4 +51,21 @@ public class PermissionJwtAuthenticationConverter implements Converter<Jwt, Abst
         return new JwtAuthenticationToken(jwt, authorities, user.getUserCode());
     }
 
+    private void checkSession(long userId, String tokenSid) {
+        // token không có sid = token cũ / giả
+        if (tokenSid == null) {
+            throw new TokenAuthenticationException(ErrorMessage.INVALID_TOKEN);
+        }
+
+        String currentSid = authSessionStore.getCurrentSid(userId);
+
+        // không có phiên: đã logout / hết hạn / bị khoá
+        if (currentSid == null) {
+            throw new TokenAuthenticationException(ErrorMessage.SESSION_EXPIRED);
+        }
+        // có phiên nhưng khác sid: máy khác đã đăng nhập
+        if (!currentSid.equals(tokenSid)) {
+            throw new TokenAuthenticationException(ErrorMessage.SESSION_REPLACED);
+        }
+    }
 }

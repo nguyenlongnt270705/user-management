@@ -16,6 +16,7 @@ import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.PermissionRepository;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.security.AuthSessionStore;
 import com.example.demo.security.AuthorityService;
 import com.example.demo.security.PrivilegeGuard;
 import com.example.demo.util.SecurityUtils;
@@ -45,6 +46,7 @@ public class UserService {
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final AuthSessionStore authSessionStore;
 
     @Transactional
     public SearchResponse<UserDTO> search(SearchRequest<SearchUserReq> request) {
@@ -150,6 +152,11 @@ public class UserService {
 
         user.setStatus(request.status());
         userRepository.saveAndFlush(user);
+
+        if (request.status() == Status.INACTIVE) {
+            authSessionStore.deleteSession(user.getId());
+        }
+
         return UserDTO.fromEntity(user);
     }
 
@@ -173,6 +180,8 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+
+        authSessionStore.deleteSession(user.getId());
     }
 
     @Transactional(readOnly = true)
@@ -195,6 +204,8 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+
+        authSessionStore.deleteSession(user.getId());
     }
 
     private void applyRolePermission(User user, List<Long> roleIds, List<Long> permissionIds) {

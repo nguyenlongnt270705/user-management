@@ -20,12 +20,13 @@ public class JwtService {
     private final JwtProperties jwtProperties;
     private final JwtEncoder jwtEncoder;
 
-    public String generateAccessToken(User user) {
+    public String generateAccessToken(User user, String sid) {
         Instant now = Instant.now();
 
-        // payload jwt, sub = userId, thời điểm tạo, thời điểm hết hạn
+        // payload jwt, sub = userId, sid = sessionId, thời điểm tạo, thời điểm hết hạn
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .subject(String.valueOf(user.getId()))
+                .claim("sid", sid)
                 .issuedAt(now)
                 .expiresAt(now.plusMillis(jwtProperties.expirationMs()))
                 .build();
@@ -39,5 +40,9 @@ public class JwtService {
 
     public long getExpirationInSeconds() {
         return jwtProperties.expirationMs() / 1000; // 1800s
+    }
+
+    public long getRefreshExpirationInSeconds() {
+        return jwtProperties.refreshExpirationMs() / 1000;
     }
 }

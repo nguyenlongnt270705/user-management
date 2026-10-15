@@ -23,7 +23,6 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @PostMapping("/search")
-    @PreAuthorize("hasAuthority('" + Permissions.PERMISSION_VIEW + "')")
     public ResponseEntity<ApiResponse<SearchResponse<PermissionDTO>>> search(
             @RequestBody(required = false) SearchRequest<SearchPermissionReq> request) {
         return ResponseEntity.ok(ApiResponse.success(permissionService.search(request)));

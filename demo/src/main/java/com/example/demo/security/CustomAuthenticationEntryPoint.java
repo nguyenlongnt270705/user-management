@@ -23,7 +23,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        ErrorMessage errorMessage = ErrorMessage.UNAUTHORIZED;
+        ErrorMessage errorMessage = authException instanceof TokenAuthenticationException e
+                ? e.getErrorMessage()
+                : ErrorMessage.UNAUTHORIZED;
         response.setStatus(errorMessage.getCode());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");

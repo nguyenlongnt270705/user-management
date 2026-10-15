@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import com.example.demo.security.ApiRuleAuthorizer;
 import com.example.demo.security.CustomAccessDeniedHandler;
 import com.example.demo.security.CustomAuthenticationEntryPoint;
 import com.example.demo.security.PermissionJwtAuthenticationConverter;
@@ -9,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,12 +24,12 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
-@EnableMethodSecurity
 public class SecurityConfiguration {
 
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final PermissionJwtAuthenticationConverter permissionJwtAuthenticationConverter;
+    private final ApiRuleAuthorizer apiRuleAuthorizer;
 
     @Value("${app.cors.allowed-origins}")
     private List<String> corsAllowedOrigins;
@@ -54,8 +54,15 @@ public class SecurityConfiguration {
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // 401 ko gửi token
                         .accessDeniedHandler(customAccessDeniedHandler)) // 403 token hợp lệ thiếu permission
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                        // chỉ cần đăng nhập, không gắn permission
+                        .requestMatchers("/api/auth/profile", "/api/auth/change-password", "/api/auth/logout").authenticated()
+                        // check api_rules
+                        .anyRequest().access((authentication, context)
+                                -> {
+                            assert context != null;
+                            return apiRuleAuthorizer.decide(authentication.get(), context.getRequest());
+                        }))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(permissionJwtAuthenticationConverter))
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // 401 gửi token sai / hết hạn

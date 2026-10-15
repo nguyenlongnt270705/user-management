@@ -34,6 +34,15 @@ public enum ErrorMessage {
     SYSTEM_ADMIN_ACCESS_PROTECTED(403, "SYSTEM_ADMIN_ACCESS_PROTECTED", "Không thể thay đổi role và permission của tài khoản System Admin"),
     OWN_COMPANY_PROTECTED(403, "OWN_COMPANY_PROTECTED", "Không thể vô hiệu hóa công ty mà bạn đang thuộc về"),
     CURRENT_PASSWORD_INCORRECT(400, "CURRENT_PASSWORD_INCORRECT", "Mật khẩu hiện tại không đúng"),
+    INVALID_REFRESH_TOKEN(401, "INVALID_REFRESH_TOKEN", "Refresh token không hợp lệ hoặc đã hết hạn"),
+    SESSION_EXPIRED(401, "SESSION_EXPIRED", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"),
+    SESSION_REPLACED(401, "SESSION_REPLACED", "Tài khoản đã được đăng nhập ở nơi khác"),
+    API_RULE_NOT_FOUND(404, "API_RULE_NOT_FOUND", "Không tìm thấy rule"),
+    API_RULE_EXISTS(409, "API_RULE_EXISTS", "Rule với method và path này đã tồn tại"),
+    API_RULE_LOCKED(403, "API_RULE_LOCKED", "Rule đã bị khóa, không thể sửa hoặc xóa"),
+    API_RULE_PATH_RESERVED(400, "API_RULE_PATH_RESERVED", "Không được cấu hình rule cho path quản lý rule hoặc path auth"),
+    API_RULE_PATH_INVALID(400, "API_RULE_PATH_INVALID", "Path không hợp lệ"),
+
 
     ;
 
