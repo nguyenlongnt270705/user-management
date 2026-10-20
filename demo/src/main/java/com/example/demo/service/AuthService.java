@@ -9,14 +9,15 @@ import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorMessage;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.AuthSessionStore;
-import com.example.demo.security.CustomUserDetails;
 import com.example.demo.security.JwtService;
+import com.example.demo.util.ValidationPatterns;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,22 +27,30 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final AuthSessionStore authSessionStore;
+    private final PasswordEncoder passwordEncoder;
 
     public LoginResponse login(LoginRequest request) {
 
         // check identifier + pass = CustomUserDetailsService + BCrypt
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(
-                            request.identifier(), request.password()));
-        } catch (BadCredentialsException e) {
+//        Authentication authentication;
+//        try {
+//            authentication = authenticationManager.authenticate(
+//                    UsernamePasswordAuthenticationToken.unauthenticated(
+//                            request.identifier(), request.password()));
+//        } catch (BadCredentialsException e) {
+//            throw AppException.error(ErrorMessage.INVALID_CREDENTIALS);
+//        }
+//
+//        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+//        assert principal != null;
+//        User user = principal.getUser();
+
+        User user = findByIdentifier(request.identifier())
+                .orElseThrow(() -> AppException.error(ErrorMessage.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw AppException.error(ErrorMessage.INVALID_CREDENTIALS);
         }
-
-        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-        assert principal != null;
-        User user = principal.getUser();
 
         if (user.getStatus() == Status.INACTIVE) {
             throw AppException.error(ErrorMessage.ACCOUNT_INACTIVE);
@@ -57,6 +66,18 @@ public class AuthService {
         String refreshToken = authSessionStore.createRefreshToken(user.getId(), sid);
         return new LoginResponse(accessToken, refreshToken, "Bearer",
                 jwtService.getExpirationInSeconds(), jwtService.getRefreshExpirationInSeconds());
+    }
+
+    private Optional<User> findByIdentifier(String identifier) {
+        String input = identifier == null ? "" : identifier.trim();
+        if (input.contains("@")) {
+            return userRepository.findByEmail(input.toLowerCase(Locale.ROOT));
+        }
+
+        if (input.matches(ValidationPatterns.PHONE)) {
+            return userRepository.findByPhoneNumber(input);
+        }
+        return Optional.empty();
     }
 
     // refresh token, giữ nguyên sid và gia hạn session
